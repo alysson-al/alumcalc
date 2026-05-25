@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlumCalc - Calculadoras de Engenharia</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- React e ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+        /* Configuração de PDF para evitar cortes */
+        #pdf-content{
+    width:100%;
+    max-width:none;
+    background:#fff;
+    color:#000;
+    font-family:Arial,sans-serif;
+    box-sizing:border-box;
+}
+
+.pdf-block{
+    width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
+    break-inside:avoid;
+    page-break-inside:avoid;
+}
+
+table{
+    width:100%;
+    table-layout:fixed;
+}
+
+*{
+    box-sizing:border-box;
+}
+        .html2pdf__page-break {
+            page-break-before: always;
+        }
+
+        *{box-sizing:border-box;}
+        .pdf-block{page-break-inside:avoid;break-inside:avoid;}
+        table{width:100%;table-layout:fixed;}
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navegação -->
+    <nav class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div class="font-bold text-2xl flex items-center space-x-2 cursor-pointer" onclick="openTab('app-home', this)">
+                <i class="ph ph-buildings text-3xl text-blue-400"></i>
+                <span class="tracking-tight">Alum<span class="text-blue-400">Calc</span></span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="openTab('app-home', this)" class="tab-btn px-3 py-2 text-sm rounded-lg bg-blue-600 font-medium transition shadow-sm">Início</button>
+                <button onclick="openTab('app-pressao', this)" class="tab-btn px-3 py-2 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 font-medium transition shadow-sm">Pressão de Vento</button>
+                <button onclick="openTab('app-flecha', this)" class="tab-btn px-3 py-2 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 font-medium transition shadow-sm">Flecha em Perfis</button>
+                <button onclick="openTab('app-vidro', this)" class="tab-btn px-3 py-2 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 font-medium transition shadow-sm">Espessura de Vidro</button>
+                <button onclick="openTab('app-relatorios', this); loadHistory();" class="tab-btn px-3 py-2 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 font-medium transition shadow-sm"><i class="ph ph-file-pdf inline mr-1"></i> Relatórios</button>
+                <button onclick="openTab('app-about', this)" class="tab-btn px-3 py-2 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 font-medium transition shadow-sm">Sobre</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col relative pb-16">
+        
+        <!-- HOME -->
+        <div id="app-home" class="tab-content block w-full flex-grow bg-slate-50 p-6 md:p-12">
+            <div class="max-w-5xl mx-auto text-center space-y-8 mt-8">
+                <div class="inline-block p-4 bg-blue-100 text-blue-600 rounded-full mb-4"><i class="ph ph-buildings text-6xl"></i></div>
+                <h1 class="text-4xl md:text-5xl font-bold text-slate-900">Bem-vindo ao AlumCalc</h1>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">A suíte de ferramentas definitiva para dimensionamento técnico de esquadrias de alumínio e vidro, baseada rigorosamente nas normas ABNT.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                    <button onclick="document.querySelectorAll('.tab-btn')[1].click()" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all text-left group">
+                        <i class="ph ph-wind text-4xl text-blue-500 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">1. Pressão Dinâmica</h3>
+                        <p class="text-sm text-slate-500">Calcule a pressão e carga de vento aplicável ao seu projeto conforme a ABNT NBR 6123.</p>
+                    </button>
+                    <button onclick="document.querySelectorAll('.tab-btn')[2].click()" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all text-left group">
+                        <i class="ph ph-ruler text-4xl text-blue-500 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">2. Flecha de Perfis</h3>
+                        <p class="text-sm text-slate-500">Verifique inércia, tensão e a deformação de perfis de alumínio bi-apoiados.</p>
+                    </button>
+                    <button onclick="document.querySelectorAll('.tab-btn')[3].click()" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all text-left group">
+                        <i class="ph ph-square-half text-4xl text-blue-500 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">3. Espessura de Vidro</h3>
+                        <p class="text-sm text-slate-500">Dimensione vidros para fachadas e coberturas conforme a ABNT NBR 7199.</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOBRE -->
+        <div id="app-about" class="tab-content hidden w-full flex-grow bg-white p-6 md:p-12">
+            <div class="max-w-3xl mx-auto space-y-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-900 border-b pb-4">Sobre o AlumCalc</h1>
+                <div class="prose prose-slate prose-lg">
+<p>O <strong>AlumCalc</strong> nasceu de uma inquietação profissional e acadêmica profunda.</p>
+<p>Durante minha trajetória profissional atuando como orçamentista no exigente setor de esquadrias de alumínio e vidro, lidava diariamente com tabelas de catálogos dos grandes sistemistas. Esses catálogos fornecem limites de vãos e especificações de inércia, mas as fórmulas e premissas matemáticas por trás daqueles números muitas vezes pareciam uma "caixa preta".</p>
+<p>A curiosidade de compreender exatamente como as pressões de vento agiam sobre os vidros e como isso se traduzia na deformação e nas tensões suportadas pelos perfis estruturais de alumínio me motivou a mergulhar nas normas técnicas.</p>
+<p>Como resultado desse aprofundamento, escrevi meu <strong>Trabalho de Conclusão de Curso (TCC)</strong> focado na inter-relação técnica das normas brasileiras aplicáveis (<strong>ABNT NBR 6123:2023, ABNT NBR 7199:2025 e ABNT NBR 10821</strong>).</p>
+<p>Para tangibilizar essa pesquisa e facilitar o dia a dia de engenheiros, projetistas e colegas orçamentistas, desenvolvi o AlumCalc.</p>
+<p>Esta suíte foi criada com o intuito de trazer transparência geométrica, confiabilidade normativa e velocidade prática para quem projeta fachadas e esquadrias.</p>
+<div class="bg-blue-50 p-6 rounded-xl border border-blue-100 mt-8">
+                        <h3 class="text-lg font-bold text-blue-900 mb-2 flex items-center"><i class="ph ph-envelope-simple text-2xl mr-2"></i> Contato e Suporte</h3>
+                        <p class="text-slate-700 text-sm mb-4">Dúvidas técnicas, sugestões de melhoria ou correções?</p>
+                        <a href="mailto:alyssonalima@hotmail.com" class="text-blue-600 font-bold hover:underline text-lg">alyssonalima@hotmail.com</a>
+                        <p class="text-slate-500 text-sm mt-4 italic">Desenvolvido por Alysson A. Lima.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RELATÓRIOS -->
+        <div id="app-relatorios" class="tab-content hidden w-full flex-grow bg-slate-50 p-4 md:p-8">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">Histórico e Relatórios</h1>
+                        <p class="text-slate-500">Gere um laudo em PDF consolidando os cálculos salvos.</p>
+                    </div>
+                    <i class="ph ph-file-pdf text-4xl text-blue-500"></i>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+                    <h2 class="text-lg font-bold text-blue-900 border-b pb-2">Dados do Projeto (Para o PDF)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nome do Cliente</label>
+                            <input type="text" id="pdf-cliente" placeholder="Ex: Construtora Alfa" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nome da Obra / Projeto</label>
+                            <input type="text" id="pdf-obra" placeholder="Ex: Edifício Central" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center border-b pb-2 mt-6">
+                        <h2 class="text-lg font-bold text-blue-900">Histórico de Cálculos</h2>
+                        <button onclick="clearAllHistory()" class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center"><i class="ph ph-trash mr-1"></i> Limpar Histórico</button>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4">Marque as caixas dos cálculos que deseja incluir no relatório impresso:</p>
+                    
+                    <div class="space-y-3" id="history-list"></div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-100">
+                        <button onclick="generatePDF()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md transition duration-300 text-lg flex items-center justify-center space-x-2">
+                            <i class="ph ph-download-simple text-xl"></i><span>Gerar Relatório em PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIV OCULTA: Layout do PDF para o html2pdf capturar -->
+        <div id="pdf-container"
+style="
+display:none;
+position:fixed;
+left:0;
+top:0;
+width:210mm;
+background:white;
+z-index:-1;">
+            <div id="pdf-content" style="padding: 40px; box-sizing: border-box;">
+                <div style="border-bottom: 2px solid #1e293b; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h1 style="font-size: 28px; font-weight: bold; margin: 0; color: #0f172a;">AlumCalc</h1>
+                        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">Relatório Técnico de Dimensionamento</p>
+                    </div>
+                    <div style="font-size: 12px; color: #64748b;" id="pdf-date"></div>
+                </div>
+                <div id="pdf-body"></div>
+                <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #cbd5e1; text-align: center; font-size: 10px; color: #64748b;">
+                    Ferramenta AlumCalc - Auxílio Técnico de Pré-dimensionamento.<br>
+                    Este documento não substitui o projeto ou a ART de um profissional habilitado.
+                </div>
+            </div>
+        </div>
+
+        <!-- PRESSÃO -->
+        <div id="app-pressao" class="tab-content hidden w-full flex-grow bg-slate-50 text-slate-800 p-4 md:p-8">
+            <div class="container mx-auto max-w-5xl">
+                <header class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-slate-900">Calculadora de Pressão de Vento</h1>
+                    <p class="text-md text-slate-600 mt-2">Conforme ABNT NBR 6123:2023</p>
+                </header>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Velocidade Básica do Vento (V₀) em m/s</label>
+                                <input type="number" id="velocidade_basica" value="30" placeholder="Ex: 30" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Fator Topográfico (S₁)</label>
+                                <select id="fator_s1" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-2">
+                                    <option value="1.0">Terreno plano ou fracamente acidentado (S1 = 1.0)</option>
+                                    <option value="0.9">Vales profundos protegidos (S1 = 0.9)</option>
+                                    <option value="custom">Taludes e morros (informar valor manual)</option>
+                                </select>
+                                <input type="number" id="fator_s1_custom" placeholder="Valor S₁ manual" class="hidden w-full p-3 bg-slate-50 border border-slate-300 rounded-lg outline-none">
+                            </div>
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <label class="block text-sm font-semibold text-slate-700">Fator S₂ (Rugosidade e Dimensões)</label>
+                                    <button onclick="document.getElementById('info-cat').classList.toggle('hidden')" class="text-blue-500 hover:text-blue-700 text-xs flex items-center"><i class="ph ph-info mr-1"></i> Categorias</button>
+                                </div>
+                                <div id="info-cat" class="hidden text-xs text-slate-600 bg-blue-50 p-3 rounded border border-blue-100">
+                                    <ul class="space-y-1">
+<li><strong>Cat I:</strong> Superfícies lisas, mar, lagos.</li>
+<li><strong>Cat II:</strong> Terrenos abertos em nível, poucos obstáculos.</li>
+<li><strong>Cat III:</strong> Terrenos com obstáculos isolados (subúrbios).</li>
+<li><strong>Cat IV:</strong> Terrenos com muitos obstáculos próximos (cidades).</li>
+<li><strong>Cat V:</strong> Terrenos com obstáculos grandes (grandes centros urbanos).</li>
+</ul>
+                                </div>
+                                <select id="categoria_terreno" class="w-full p-3 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="1">Categoria I</option>
+                                    <option value="2">Categoria II</option>
+                                    <option value="3">Categoria III</option>
+                                    <option value="4" selected>Categoria IV</option>
+                                    <option value="5">Categoria V</option>
+                                </select>
+                                <div>
+                                    <select id="classe_edificacao" class="w-full p-3 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="A" selected>Classe A (maior dimensão ≤ 20m)</option>
+                                        <option value="B">Classe B (20m < maior dimensão ≤ 50m)</option>
+                                        <option value="C">Classe C (maior dimensão > 50m)</option>
+                                    </select>
+                                    <p class="text-xs text-blue-600 mt-1 font-medium"><i class="ph ph-warning-circle"></i> Nota: Para vedação (esquadrias/vidros), use Classe A.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Altura do Edifício (m)</label>
+                                    <input type="number" id="altura_z" value="90" placeholder="Ex: 10" class="w-full p-3 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Fator Estatístico (S₃) - Grupo de Uso</label>
+                                <select id="fator_s3" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-2">
+                                    <option value="1.11">Grupo 1 - Essenciais</option>
+                                    <option value="1.06">Grupo 2 - Alta ocupação</option>
+                                    <option value="1.00" selected>Grupo 3 - Residencial/Comercial</option>
+                                    <option value="0.95">Grupo 4 - Depósitos</option>
+                                    <option value="0.83">Grupo 5 - Provisórias</option>
+                                </select>
+                                <label class="flex items-start space-x-2 text-sm text-slate-700 cursor-pointer bg-slate-50 p-3 border border-slate-200 rounded-lg">
+                                    <input type="checkbox" id="s3_vedacao" class="mt-1" autocomplete="off">
+                                    <span>Aplicar fator de redução S₃ x 0,92 (Permitido para elementos de vedação).</span>
+                                </label>
+                            </div>
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <div class="flex justify-between items-center mb-2">
+<label class="block text-sm font-semibold text-slate-700">Coef. de Forma (Cpe - Cpi)</label>
+<button type="button" onclick="document.getElementById('info-cpe').classList.toggle('hidden')" class="text-blue-500 hover:text-blue-700 text-xs flex items-center"><i class="ph ph-info mr-1"></i>Explicação</button>
+</div>
+<div id="info-cpe" class="hidden text-xs text-slate-600 bg-blue-50 p-3 rounded border border-blue-100 mb-3">
+<p>Os coeficientes de pressão externa (Cpe) e interna (Cpi) dependem da geometria do prédio e permeabilidade.</p>
+<p class="mt-2">A diferença aerodinâmica (Cpe - Cpi) determina a carga total final sobre a esquadria.</p>
+<p class="mt-2">O valor 1,2 é uma adoção típica conservadora padronizada pelo mercado para análises rápidas, mas deve ser extraído das tabelas da NBR 6123 conforme a zona da edificação.</p>
+</div>
+                                <input type="number" id="cpe_cpi" step="0.1" value="1.2" placeholder="Ex: 1.2" class="w-full p-3 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                             <button id="calcular-pressao" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-md text-lg">
+                                Calcular Pressões
+                             </button>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col" id="pressao-resultados-view">
+                            <h2 class="text-xl font-bold text-slate-900 mb-4 border-b pb-2">Resultados</h2>
+                            <div id="resultados" class="space-y-4 flex-grow">
+                                <div class="text-center text-slate-400 py-12 flex flex-col items-center"><i class="ph ph-wind text-5xl mb-3 opacity-50"></i><p>Preencha os dados e calcule.</p></div>
+                            </div>
+                            <div id="export-section" class="hidden mt-6 pt-6 border-t border-slate-200">
+                                <button id="exportar-pressao" class="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-xl hover:bg-slate-700 transition flex items-center justify-center space-x-2">
+                                    <i class="ph ph-paper-plane-right"></i><span>Usar Pressão nas outras Calculadoras</span>
+                                </button>
+                                <p id="export-msg" class="text-green-600 text-sm text-center mt-2 font-medium hidden">Enviado com sucesso!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLECHA (REACT) -->
+        <div id="app-flecha" class="tab-content hidden w-full flex-grow bg-slate-50"><div id="root"></div></div>
+
+        <!-- VIDRO -->
+        <div id="app-vidro" class="tab-content hidden w-full flex-grow bg-slate-50 p-4 md:p-8">
+            <div class="max-w-5xl mx-auto space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h1 class="text-2xl font-bold text-slate-900">Calculadora de Espessura de Vidro</h1>
+                    <p class="text-slate-500">Dimensionamento normativo conforme a ABNT NBR 7199:2025.</p>
+                </div>
+                <form id="calc-form" class="space-y-6">
+                    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+                        <h2 class="text-lg font-bold text-blue-900 border-b pb-2">1. Condições da Instalação</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div><label class="block text-sm font-medium text-slate-700 mb-1">Menor Lado (l) em m</label><input type="number" id="lado-l" step="0.01" min="0.1" placeholder="Ex: 1.00" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                            <div><label class="block text-sm font-medium text-slate-700 mb-1">Maior Lado (L) em m</label><input type="number" id="lado-L" step="0.01" min="0.1" placeholder="Ex: 1.50" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                            <div><label class="block text-sm font-medium text-slate-700 mb-1">Pressão de Projeto ($P_v$)</label><input type="number" id="pressao-vento" placeholder="Em Pa (ex: 1200)" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Apoio</label>
+                                <select id="tipo-apoio" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="4">Apoiado em 4 lados</option>
+                                    <option value="3">Apoiado em 3 lados</option>
+                                    <option value="2">Apoiado em 2 lados opostos</option>
+                                </select>
+                            </div>
+                            <div id="borda-livre-wrapper" class="hidden">
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Borda Livre</label>
+                                <select id="borda-livre" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="menor">Menor lado (l) é a borda livre</option>
+                                    <option value="maior">Maior lado (L) é a borda livre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Aplicação (Local)</label>
+                                <select id="aplicacao" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="vert-ext">Vertical - Área Externa</option>
+                                    <option value="vert-int">Vertical - Área Interna</option>
+                                    <option value="incl-ext">Inclinado - Área Externa</option>
+                                    <option value="incl-int">Inclinado - Área Interna</option>
+                                </select>
+                            </div>
+                            <div id="angulo-wrapper" class="hidden"><label class="block text-sm font-medium text-slate-700 mb-1">Ângulo (graus)</label><input type="number" id="angulo" placeholder="Ex: 75" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Altura (Fator $c$)</label>
+                                <select id="altura" class="w-full border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="terreo">Térreo < 6m (c = 0.9)</option>
+                                    <option value="outros">Demais casos (c = 1.0)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+                        <h2 class="text-lg font-bold text-blue-900 border-b pb-2">2. Composição do Vidro</h2>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Sistema</label>
+                            <select id="sistema-tipo" class="w-full md:w-1/2 border border-slate-300 bg-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="mono">Monolítico</option>
+                                <option value="lami">Laminado (2 vidros)</option>
+                                <option value="insu">Insulado (Duplo, 2x Monolítico)</option>
+                            </select>
+                        </div>
+                        <div id="composition-inputs" class="mt-6 space-y-6"></div>
+                    </div>
+                    <button type="button" id="calculate-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md transition duration-300 text-lg">Calcular Vidro</button>
+                </form>
+        
+                <!-- Resultados Vidro -->
+                <div id="results-wrapper" class="hidden mt-8">
+                    <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg" id="vidro-resultados-view">
+                        <h2 class="text-xl font-bold text-blue-400 border-b border-slate-700 pb-2 mb-6">Relatório Normativo</h2>
+                        <div id="result-status" class="p-4 rounded-lg text-center text-2xl font-bold mb-6 border"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-slate-800 border border-slate-700 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg text-white mb-3">Resistência (ELU)</h3>
+                                <div class="space-y-2">
+                                    <p class="flex justify-between text-slate-300">Pressão de Cálculo: <span id="res-pressao-calculo" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between text-slate-300">Espessura e1 (ref.): <span id="res-e1" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between text-slate-300">Fator de Redução (c): <span id="res-c" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between text-slate-300">Resistência Alvo (e1 x c): <span id="res-alvo" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between font-bold mt-2">Resistência da Peça (eR): <span id="res-er" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between font-bold">Status: <span id="res-er-status" class="font-mono"></span></p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-800 border border-slate-700 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg text-white mb-3">Deformação (ELS)</h3>
+                                <div class="space-y-2">
+                                    <p class="flex justify-between text-slate-300">Coef. Deformação (alpha): <span id="res-alpha" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between text-slate-300">Espessura de Inércia (eF): <span id="res-ef" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between text-slate-300">Flecha Máx. Admissível: <span id="res-flecha-admissivel" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between font-bold mt-2">Flecha Calculada (f): <span id="res-flecha-calculada" class="font-mono text-white"></span></p>
+                                    <p class="flex justify-between font-bold">Status: <span id="res-flecha-status" class="font-mono"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="error-message" class="mt-4 text-center text-red-400 font-medium text-sm"></div>
+<div class="mt-6">
+<button type="button" onclick="document.getElementById('criterios-vidro').classList.toggle('hidden')" class="w-full bg-slate-700 hover:bg-slate-800 text-white py-3 rounded-lg font-semibold">Critérios de Aprovação / Reprovação</button>
+<div id="criterios-vidro" class="hidden mt-4 bg-slate-800 border border-slate-700 rounded-lg p-4 text-sm text-slate-200">
+<h3 class="font-bold text-white mb-3">1. Verificação de Resistência (Estado Limite Último)</h3>
+<p>A espessura resistente da peça (eR) deve ser maior ou igual à espessura de referência calculada (e1) multiplicada pelo fator de altura (c).</p>
+<p class="mt-2 font-mono">eR ≥ e1 × c</p>
+<hr class="my-4 border-slate-600">
+<h3 class="font-bold text-white mb-3">2. Verificação de Flecha (Estado Limite de Serviço)</h3>
+<p>A deformação calculada (f) baseada na espessura de inércia (eF) e no coeficiente da tabela (α) não pode ultrapassar o limite de flecha máxima admissível da norma.</p>
+<p class="mt-2 font-mono">f ≤ flecha admissível</p>
+<hr class="my-4 border-slate-600">
+<h3 class="font-bold text-green-400">Aprovação Final</h3>
+<p class="mt-2">O sistema só é considerado Aprovado se atender aos dois critérios rigorosamente.</p>
+<ul class="mt-2 list-disc ml-5"><li>Resistência (ELU)</li><li>Flecha (ELS)</li></ul>
+</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-200 border-t border-slate-300 py-4 fixed bottom-0 w-full z-40">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-xs md:text-sm text-slate-600 font-medium">
+                <i class="ph-fill ph-warning text-amber-500 mr-1"></i>
+                Aviso: Resultados para pré-dimensionamento técnico. <strong>Não substituem</strong> a norma da ABNT nem a ART de um profissional.
+            </p>
+        </div>
+    </footer>
+
+    <!-- SCRIPT GERAL DE BANCO DE DADOS LOCAL E PDF -->
+    <script>
+        function openTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); });
+            const target = document.getElementById(tabId);
+            target.classList.remove('hidden'); target.classList.add('block');
+            window.scrollTo(0,0);
+            if(btn) {
+                document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('bg-blue-600'); el.classList.add('bg-slate-800'); });
+                btn.classList.remove('bg-slate-800'); btn.classList.add('bg-blue-600');
+            }
+        }
+
+        // Chave "v3" garante um banco de dados limpo e contínuo para você
+        window.saveHistoryItem = function(type, title, icon, data) {
+            try {
+                let hist = JSON.parse(localStorage.getItem('alumcalc_history_v3') || '[]');
+                hist.unshift({ id: Date.now().toString() + Math.floor(Math.random()*1000), type, title, icon, data, date: new Date().toLocaleString() });
+                localStorage.setItem('alumcalc_history_v3', JSON.stringify(hist));
+            } catch(e) { console.error("Erro ao salvar histórico", e); }
+        };
+
+        window.deleteHistory = function(id) {
+            if(confirm('Tem certeza que deseja excluir este cálculo do histórico?')) {
+                let hist = JSON.parse(localStorage.getItem('alumcalc_history_v3') || '[]');
+                hist = hist.filter(item => item.id !== id);
+                localStorage.setItem('alumcalc_history_v3', JSON.stringify(hist));
+                loadHistory();
+            }
+        };
+
+        window.clearAllHistory = function() {
+            if(confirm('Tem certeza que deseja excluir TODOS os cálculos salvos?')) {
+                localStorage.removeItem('alumcalc_history_v3');
+                loadHistory();
+            }
+        };
+
+        function loadHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            let hist = JSON.parse(localStorage.getItem('alumcalc_history_v3') || '[]');
+            
+            if(hist.length === 0) {
+                list.innerHTML = '<div class="text-center text-slate-500 py-6">Nenhum cálculo salvo no histórico.</div>';
+                return;
+            }
+
+            hist.forEach(item => {
+                list.innerHTML += `
+                    <div class="flex items-center p-4 border border-slate-200 rounded-lg bg-slate-50 hover:bg-blue-50 transition">
+                        <input type="checkbox" autocomplete="off" id="chk-${item.id}" value="${item.id}" class="pdf-history-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer">
+                        <label for="chk-${item.id}" class="ml-4 flex-grow cursor-pointer">
+                            <div class="font-bold text-slate-800 flex items-center"><i class="ph ${item.icon} mr-2 text-blue-600"></i> ${item.title}</div>
+                            <div class="text-xs text-slate-500 mt-1">Salvo em: ${item.date}</div>
+                        </label>
+                        <button onclick="deleteHistory('${item.id}')" class="ml-4 text-red-500 hover:text-red-700 p-2 rounded hover:bg-red-50 transition"><i class="ph ph-trash text-xl"></i></button>
+                    </div>`;
+            });
+            
+            // Força todas as checkboxes a iniciarem desmarcadas
+            document.querySelectorAll('.pdf-history-checkbox').forEach(chk => chk.checked = false);
+        }
+
+        const safeFormat = (val, dec) => (val === undefined || val === null || isNaN(val)) ? '-' : Number(val).toLocaleString('pt-BR', { maximumFractionDigits: dec });
+
+        function generatePDF() {
+            const checkboxes = document.querySelectorAll('.pdf-history-checkbox:checked');
+            if(checkboxes.length === 0) { alert("Marque pelo menos um cálculo na lista para gerar o relatório."); return; }
+
+            let hist = JSON.parse(localStorage.getItem('alumcalc_history_v3') || '[]');
+            let htmlContent = '';
+            const cliente = document.getElementById('pdf-cliente').value || 'Não informado';
+            const obra = document.getElementById('pdf-obra').value || 'Não informado';
+
+            htmlContent += `
+            <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">
+                <p style="margin: 0 0 8px 0;"><strong>Cliente:</strong> ${cliente}</p>
+                <p style="margin: 0;"><strong>Obra / Projeto:</strong> ${obra}</p>
+            </div>`;
+
+            checkboxes.forEach((chk, index) => {
+                const item = hist.find(h => h.id === chk.value);
+                if(!item) return;
+                const d = item.data;
+
+                if (item.type === 'pressao') {
+                    htmlContent += `
+                    <div class="pdf-block" style="margin-bottom: 24px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 8px;">
+                        <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 16px; color: #1e3a8a; margin-top: 0;">Cálculo #${index+1} - Pressão Dinâmica do Vento (NBR 6123)</h2>
+                        <table style="width: 100%; font-size: 13px; margin-bottom: 16px; border-collapse: collapse;">
+                            <tr><td style="padding: 4px 0;"><strong>Velocidade Básica (V0):</strong> ${d.v0} m/s</td><td style="padding: 4px 0;"><strong>Categoria / Classe:</strong> Cat ${d.categoria} / ${d.classe}</td></tr>
+                            <tr><td style="padding: 4px 0;"><strong>Altura considerada (z):</strong> ${d.alturaZ} m</td><td style="padding: 4px 0;"><strong>Fator Topográfico (S1):</strong> ${d.s1}</td></tr>
+                            <tr><td style="padding: 4px 0;"><strong>Fator S2:</strong> ${safeFormat(d.s2, 3)}</td><td style="padding: 4px 0;"><strong>Fator Estatístico (S3):</strong> ${safeFormat(d.s3, 3)} ${d.isVedacao ? '(Vedação)' : ''}</td></tr>
+                        </table>
+                        <div style="background-color: #f8fafc; padding: 16px; text-align: center; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <p style="font-weight: bold; color: #334155; margin: 0 0 8px 0;">Velocidade Vₖ: ${safeFormat(d.vk, 2)} m/s &nbsp;|&nbsp; Pressão Dinâmica (q): ${safeFormat(d.q, 2)} Pa</p>
+                            <p style="font-weight: bold; font-size: 18px; color: #1e40af; margin: 0 0 4px 0;">Pressão de Projeto Final: ${safeFormat(d.pressaoDeProjetoFinal, 2)} Pa</p>
+                            <p style="font-size: 11px; color: #64748b; margin: 0;">Considerando Cpe - Cpi = ${d.cpe_cpi}</p>
+                        </div>
+                    </div>`;
+                }
+
+                if (item.type === 'flecha') {
+                    const statusHtml = d.passed ? '<span style="color: #16a34a; font-weight: bold;">PERFIL APROVADO</span>' : '<span style="color: #dc2626; font-weight: bold;">PERFIL REPROVADO</span>';
+                    let loadDesc = d.loadType === 'pressao' ? `Pressão: ${d.loadPressure} Pa (Atuação: ${d.actingWidth}mm)` : d.loadType === 'distribuida' ? `Distribuída: ${d.loadDistributed} N/m` : `Concentrada: ${d.loadConcentrated} N`;
+
+                    htmlContent += `
+                    <div class="pdf-block" style="margin-bottom: 24px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 8px;">
+                        <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 16px; color: #1e3a8a; margin-top: 0;">Cálculo #${index+1} - Flecha e Tensão em Perfis</h2>
+                        <table style="width: 100%; font-size: 13px; margin-bottom: 16px; border-collapse: collapse;">
+                            <tr><td style="padding: 4px 0; width: 50%;"><strong>Inércia (Ix):</strong> ${safeFormat(d.inertia, 2)} mm⁴</td><td style="padding: 4px 0; width: 50%;"><strong>Mód. Resist. (Wx):</strong> ${safeFormat(d.resistance, 2)} mm³</td></tr>
+                            <tr><td style="padding: 4px 0;"><strong>Vão (L):</strong> ${d.L} mm</td><td style="padding: 4px 0;"><strong>Tensão Escoamento:</strong> ${d.esc} MPa</td></tr>
+                            <tr><td colspan="2" style="padding: 4px 0;"><strong>Carga Aplicada:</strong> ${loadDesc}</td></tr>
+                        </table>
+                        
+                        <table style="width: 100%; border-collapse: separate; border-spacing: 16px 0; margin: 0 -8px 16px -8px; font-size: 12px;">
+                            <tr>
+                                <td style="width: 50%; border: 1px solid #e2e8f0; padding: 12px; vertical-align: top; border-radius: 6px;">
+                                    <p style="font-weight: bold; margin: 0 0 8px 0; font-size: 13px;">Tensão (ELU)</p>
+                                    <div style="margin-bottom: 4px;"><strong>Momento Fletor:</strong> <span style="float: right;">${safeFormat(d.mMax, 2)} N.m</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 4px;"><strong>Tensão Admissível:</strong> <span style="float: right;">${safeFormat(d.tensaoAdm, 2)} MPa</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 8px;"><strong>Tensão Calculada:</strong> <span style="float: right;">${safeFormat(d.tensaoCalc, 2)} MPa</span></div><div style="clear:both;"></div>
+                                    <div style="text-align: right; font-weight: bold; color: ${d.passedTensao ? '#16a34a' : '#dc2626'};">${d.passedTensao ? 'OK' : 'FALHOU'}</div>
+                                </td>
+                                <td style="width: 50%; border: 1px solid #e2e8f0; padding: 12px; vertical-align: top; border-radius: 6px;">
+                                    <p style="font-weight: bold; margin: 0 0 8px 0; font-size: 13px;">Deformação (ELS)</p>
+                                    <div style="margin-bottom: 4px;"><strong>Flecha Admissível:</strong> <span style="float: right;">${safeFormat(d.admDeflection, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 8px;"><strong>Flecha Calculada:</strong> <span style="float: right;">${safeFormat(d.calcDeflection, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="text-align: right; font-weight: bold; color: ${d.passedFlecha ? '#16a34a' : '#dc2626'};">${d.passedFlecha ? 'OK' : 'FALHOU'}</div>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 12px;">
+                            <p style="font-weight: bold; margin: 0 0 4px 0;">Valores Máximos Tolerados (Para o limite de Flecha):</p>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 2px;"><strong>Vão Máx. Tolerado:</strong> ${safeFormat(d.maxSpan, 1)} mm</li>
+                                ${d.maxWidth !== null ? `<li style="margin-bottom: 2px;"><strong>Largura Atuação Máx:</strong> ${safeFormat(d.maxWidth, 1)} mm</li>` : ''}
+                                ${d.maxLoad !== null ? `<li style="margin-bottom: 2px;"><strong>Carga Máx. Tolerada:</strong> ${d.loadType === 'distribuida' ? safeFormat(d.maxLoad * 1000, 1) + ' N/m' : safeFormat(d.maxLoad, 1) + ' N'}</li>` : ''}
+                            </ul>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 12px; text-align: center; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 16px;">${statusHtml}</div>
+                    </div>`;
+                }
+
+                if (item.type === 'vidro') {
+                    const statusHtml = (d.resOk && d.flechaOk) ? '<span style="color: #16a34a; font-weight: bold;">SISTEMA APROVADO</span>' : '<span style="color: #dc2626; font-weight: bold;">SISTEMA REPROVADO</span>';
+                    const panesDesc = d.panes ? d.panes.map((p, i) => `Lâmina ${i+1}: ${p.thickness}mm (${p.type})`).join('<br>') : 'Não detalhado';
+
+                    htmlContent += `
+                    <div class="pdf-block" style="margin-bottom: 24px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 8px;">
+                        <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 16px; color: #1e3a8a; margin-top: 0;">Cálculo #${index+1} - Espessura de Vidro (NBR 7199)</h2>
+                        <table style="width: 100%; font-size: 13px; margin-bottom: 16px; border-collapse: collapse;">
+                            <tr><td style="padding: 4px 0; width: 50%;"><strong>Dimensões (l x L):</strong> ${d.l}m x ${d.L}m</td><td style="padding: 4px 0; width: 50%;"><strong>Apoio:</strong> ${d.apoio} lados (${d.bordaLivre === 'menor' ? 'Menor' : 'Maior'} livre)</td></tr>
+                            <tr><td style="padding: 4px 0;"><strong>Pressão de Vento:</strong> ${d.Pv} Pa</td><td style="padding: 4px 0;"><strong>Aplicação:</strong> ${d.app}</td></tr>
+                            <tr><td style="padding: 4px 0;"><strong>Sistema:</strong> ${d.system.toUpperCase()}</td><td style="padding: 4px 0;"><strong>Fator Altura (c):</strong> ${d.c}</td></tr>
+                            <tr><td colspan="2" style="padding: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-top: 8px;"><strong>Composição:</strong><br>${panesDesc}</td></tr>
+                        </table>
+                        
+                        <table style="width: 100%; border-collapse: separate; border-spacing: 16px 0; margin: 0 -8px 16px -8px; font-size: 12px;">
+                            <tr>
+                                <td style="width: 50%; border: 1px solid #e2e8f0; padding: 12px; vertical-align: top; border-radius: 6px;">
+                                    <p style="font-weight: bold; margin: 0 0 8px 0; font-size: 13px;">Resistência (ELU)</p>
+                                    <div style="margin-bottom: 4px;"><strong>Pressão de Cálculo:</strong> <span style="float: right;">${safeFormat(d.P, 2)} Pa</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 4px;"><strong>Espessura e1 (Ref.):</strong> <span style="float: right;">${safeFormat(d.e1, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 4px;"><strong>Alvo (e1 x c):</strong> <span style="float: right;">${safeFormat(d.e_target, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 8px;"><strong>Resistência da Peça (eR):</strong> <span style="float: right;">${safeFormat(d.eR, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="text-align: right; font-weight: bold; color: ${d.resOk ? '#16a34a' : '#dc2626'};">${d.resOk ? 'OK' : 'FALHOU'}</div>
+                                </td>
+                                <td style="width: 50%; border: 1px solid #e2e8f0; padding: 12px; vertical-align: top; border-radius: 6px;">
+                                    <p style="font-weight: bold; margin: 0 0 8px 0; font-size: 13px;">Deformação (ELS)</p>
+                                    <div style="margin-bottom: 4px;"><strong>Coef. Deformação (α):</strong> <span style="float: right;">${safeFormat(d.alpha, 4)}</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 4px;"><strong>Espessura Inércia (eF):</strong> <span style="float: right;">${safeFormat(d.eF, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 4px;"><strong>Flecha Admissível:</strong> <span style="float: right;">${safeFormat(d.f_adm, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="margin-bottom: 8px;"><strong>Flecha Calculada:</strong> <span style="float: right;">${safeFormat(d.f, 2)} mm</span></div><div style="clear:both;"></div>
+                                    <div style="text-align: right; font-weight: bold; color: ${d.flechaOk ? '#16a34a' : '#dc2626'};">${d.flechaOk ? 'OK' : 'FALHOU'}</div>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="background-color: #f1f5f9; padding: 12px; text-align: center; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 16px;">${statusHtml}</div>
+                    </div>`;
+                }
+                
+                // Quebra de página automática no PDF se houver mais um
+                if (index < checkboxes.length - 1) {
+                    htmlContent += `<div class="html2pdf__page-break"></div>`;
+                }
+            });
+
+            document.getElementById('pdf-date').innerText = "Gerado em: " + new Date().toLocaleString();
+            document.getElementById('pdf-body').innerHTML = htmlContent;
+
+            const element = document.getElementById('pdf-content');
+            
+            const opt = {
+
+    margin: 8,
+
+    filename: 'AlumCalc_Relatorio_Tecnico.pdf',
+
+    image: {
+        type: 'jpeg',
+        quality: 1
+    },
+
+    html2canvas: {
+        scale: 1.5,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0
+    },
+
+    jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+    },
+
+    pagebreak: {
+        mode: ['avoid-all','css','legacy']
+    }
+};
+
+            const container = document.getElementById('pdf-container');
+            container.style.display = 'block';
+document.getElementById('pdf-content').style.width = '190mm'; 
+
+            html2pdf()
+    .set(opt)
+    .from(element)
+    .save()
+    .then(() => {
+
+        document.getElementById('pdf-content').style.width = '';
+
+        container.style.display = 'none';
+    });
+        }
+    </script>
+
+    <!-- REACT: CÁLCULO DE FLECHA -->
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const MODULO_ELASTICIDADE_ALUMINIO = 70000; 
+
+        const PERFIS_CATALOGO = [
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO743+ECO743', Ix: 26702, Wx: 1817 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO756+ECO756', Ix: 39634, Wx: 2386 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO756+ECO780', Ix: 75794, Wx: 3528 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO756+ECO761', Ix: 162901, Wx: 5581 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO756+ECO796', Ix: 191644, Wx: 5965 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO780+ECO780', Ix: 111954, Wx: 4670 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO761+ECO761', Ix: 286168, Wx: 8776 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO720+ECO720', Ix: 517874, Wx: 14273 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO796+ECO796', Ix: 343654, Wx: 9544 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Mão de Amigo', perfil: 'ECO739+ECO739', Ix: 23776, Wx: 2211 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Montantes Centrais', perfil: 'ECO744+ECO744', Ix: 18316, Wx: 1698 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Montantes Centrais', perfil: 'ECO799+ECO799', Ix: 51532, Wx: 2465 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Montantes Centrais', perfil: 'ECO760+ECO760', Ix: 239332, Wx: 7839 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Montantes Centrais', perfil: 'ECO721+ECO721', Ix: 384556, Wx: 11533 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Montantes Centrais', perfil: 'ECO795+ECO795', Ix: 290816, Wx: 8547 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Unnion', tipo: 'Colunas', perfil: 'ECO781', Ix: 179218, Wx: 5500 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Mão de Amigo', perfil: 'VT859+VT859', Ix: 65060, Wx: 3445 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Mão de Amigo', perfil: 'VT859+VT861', Ix: 251041, Wx: 7196 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Mão de Amigo', perfil: 'VT861+VT861', Ix: 437022, Wx: 10948 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Mão de Amigo', perfil: 'VT1000+VT1000', Ix: 576108, Wx: 13272 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Mão de Amigo', perfil: 'VT1001+VT1001', Ix: 311582, Wx: 8686 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Montantes Centrais', perfil: 'VT721+VT721', Ix: 490876, Wx: 14486 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Montantes Centrais', perfil: 'VT845+VT845', Ix: 300218, Wx: 7560 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Montantes Centrais', perfil: 'VT899+VT899', Ix: 144272, Wx: 4254 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Montantes Centrais', perfil: 'VT846+VT846', Ix: 316080, Wx: 7960 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecoline 2.5', tipo: 'Colunas', perfil: 'VT009', Ix: 218402, Wx: 6213 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Mão de Amigo', perfil: 'CHR027+CHR027', Ix: 156094, Wx: 7486 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Mão de Amigo', perfil: 'CHR027+CHR026', Ix: 739830, Wx: 14782 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Mão de Amigo', perfil: 'CHR026+CHR026', Ix: 1323566, Wx: 22078 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Mão de Amigo', perfil: 'CHR107+CHR107', Ix: 958452, Wx: 19632 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Mão de Amigo', perfil: 'CHR108+CHR108', Ix: 1626926, Wx: 27748 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Montantes Centrais', perfil: 'CHR028+CHR028', Ix: 117952, Wx: 7257 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Montantes Centrais', perfil: 'CHR042+CHR042', Ix: 319612, Wx: 8890 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Montantes Centrais', perfil: 'CHR040+CHR040', Ix: 685390, Wx: 15063 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Colunas', perfil: 'CHR067', Ix: 628247, Wx: 11698 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Colunas', perfil: 'CHR074', Ix: 1682176, Wx: 21872 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Chroma', tipo: 'Colunas', perfil: 'CHR086', Ix: 3812352, Wx: 38577 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecostick', tipo: 'Colunas', perfil: 'PS301', Ix: 63286, Wx: 2971 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecostick', tipo: 'Colunas', perfil: 'PS354', Ix: 176110, Wx: 5697 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecostick', tipo: 'Colunas', perfil: 'PS305', Ix: 338624, Wx: 8624 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecostick', tipo: 'Colunas', perfil: 'PS306', Ix: 740326, Wx: 15021 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecostick', tipo: 'Colunas', perfil: 'PS307', Ix: 1629580, Wx: 24752 },
+            { sistemista: 'Perfil Alumínio', sistema: 'Ecostick', tipo: 'Colunas', perfil: 'PS308', Ix: 5441385, Wx: 54647 },
+            { sistemista: 'Hydro', sistema: 'Cittá', tipo: 'Colunas', perfil: 'VL025', Ix: 134517, Wx: 4635 },
+            { sistemista: 'Hydro', sistema: 'Cittá', tipo: 'Colunas', perfil: 'VL001', Ix: 313750, Wx: 8324 },
+            { sistemista: 'Hydro', sistema: 'Cittá', tipo: 'Colunas', perfil: 'VL024', Ix: 735423, Wx: 15411 },
+            { sistemista: 'Hydro', sistema: 'Cittá', tipo: 'Colunas', perfil: 'VL060', Ix: 1297097, Wx: 21582 },
+            { sistemista: 'Hydro', sistema: 'Cittá', tipo: 'Colunas', perfil: 'VL130', Ix: 3349169, Wx: 44530 },
+            { sistemista: 'Hydro', sistema: 'Cittá', tipo: 'Colunas', perfil: 'VL140', Ix: 6853502, Wx: 74844 }
+        ];
+
+        function App() {
+            const [inertiaMode, setInertiaMode] = useState('manual'); 
+            const [profileType, setProfileType] = useState('retangular');
+            const [inertiaManual, setInertiaManual] = useState('');
+            const [resistanceManual, setResistanceManual] = useState('');
+            const [yieldStrength, setYieldStrength] = useState('120');
+            const [dimWidth, setDimWidth] = useState('');
+            const [dimHeight, setDimHeight] = useState('');
+            const [dimSide, setDimSide] = useState('');
+            const [dimDiameter, setDimDiameter] = useState('');
+            const [dimThickness, setDimThickness] = useState('');
+            const [selectedSistemista, setSelectedSistemista] = useState('');
+            const [selectedSistema, setSelectedSistema] = useState('');
+            const [selectedTipo, setSelectedTipo] = useState('');
+            const [selectedPerfil, setSelectedPerfil] = useState('');
+            const [catalogProps, setCatalogProps] = useState({ I: '', W: '' });
+            const [loadType, setLoadType] = useState('pressao');
+            const [spanLength, setSpanLength] = useState('');
+            const [loadPressure, setLoadPressure] = useState('');
+            const [actingWidth, setActingWidth] = useState('');
+            const [loadConcentrated, setLoadConcentrated] = useState('');
+            const [loadDistributed, setLoadDistributed] = useState('');
+            const [results, setResults] = useState(null);
+            const [error, setError] = useState('');
+            const [showAlloys, setShowAlloys] = useState(false);
+
+            useEffect(() => {
+                const handlePressureExport = (e) => {
+                    setLoadPressure(e.detail.toFixed(2));
+                    setLoadType('pressao');
+                };
+                window.addEventListener('pressureExported', handlePressureExport);
+                return () => window.removeEventListener('pressureExported', handlePressureExport);
+            }, []);
+
+            const sistemistas = useMemo(() => Array.from(new Set(PERFIS_CATALOGO.map(p => p.sistemista))), []);
+            const sistemas = useMemo(() => {
+                if(!selectedSistemista) return [];
+                return Array.from(new Set(PERFIS_CATALOGO.filter(p => p.sistemista === selectedSistemista).map(p => p.sistema)));
+            }, [selectedSistemista]);
+            const tipos = useMemo(() => {
+                if(!selectedSistema) return [];
+                return Array.from(new Set(PERFIS_CATALOGO.filter(p => p.sistemista === selectedSistemista && p.sistema === selectedSistema).map(p => p.tipo)));
+            }, [selectedSistemista, selectedSistema]);
+            const perfis = useMemo(() => {
+                if(!selectedTipo) return [];
+                return PERFIS_CATALOGO.filter(p => p.sistemista === selectedSistemista && p.sistema === selectedSistema && p.tipo === selectedTipo);
+            }, [selectedSistemista, selectedSistema, selectedTipo]);
+
+            const handlePerfilChange = (val) => {
+                setSelectedPerfil(val);
+                const p = perfis.find(x => x.perfil === val);
+                if(p) setCatalogProps({ I: p.Ix, W: p.Wx });
+                else setCatalogProps({ I: '', W: '' });
+            };
+
+            const calculateProperties = () => {
+                if (inertiaMode === 'manual') return { I: parseFloat(inertiaManual), W: parseFloat(resistanceManual) };
+                if (inertiaMode === 'catalogo') return { I: parseFloat(catalogProps.I), W: parseFloat(catalogProps.W) };
+
+                const t = parseFloat(dimThickness);
+                if (isNaN(t) || t <= 0) return { I: NaN, W: NaN };
+
+                if (profileType === 'retangular') {
+                    const b = parseFloat(dimWidth);
+                    const h = parseFloat(dimHeight);
+                    if (isNaN(b) || isNaN(h) || b <= 2*t || h <= 2*t) return { I: NaN, W: NaN };
+                    const b_int = b - 2 * t; const h_int = h - 2 * t;
+                    const I = ((b * Math.pow(h, 3)) - (b_int * Math.pow(h_int, 3))) / 12;
+                    return { I, W: I / (h / 2) };
+                } 
+                else if (profileType === 'quadrado') {
+                    const a = parseFloat(dimSide);
+                    if (isNaN(a) || a <= 2*t) return { I: NaN, W: NaN };
+                    const a_int = a - 2 * t;
+                    const I = (Math.pow(a, 4) - Math.pow(a_int, 4)) / 12;
+                    return { I, W: I / (a / 2) };
+                } 
+                else if (profileType === 'redondo') {
+                    const d = parseFloat(dimDiameter);
+                    if (isNaN(d) || d <= 2*t) return { I: NaN, W: NaN };
+                    const d_int = d - 2 * t;
+                    const I = (Math.PI * (Math.pow(d, 4) - Math.pow(d_int, 4))) / 64;
+                    return { I, W: I / (d / 2) };
+                }
+                return { I: NaN, W: NaN };
+            };
+
+            const handleCalculate = () => {
+                try {
+                    setError('');
+                    setResults(null);
+
+                    const props = calculateProperties();
+                    const I = props.I;
+                    const W = props.W;
+                    const L = parseFloat(spanLength);
+                    const esc = parseFloat(yieldStrength);
+
+                    if (isNaN(I) || I <= 0 || isNaN(W) || W <= 0) { setError('Verifique os dados do momento de inércia e módulo de resistência.'); return; }
+                    if (isNaN(L) || L <= 0) { setError('A distância entre os apoios (Vão) deve ser maior que zero.'); return; }
+                    if (isNaN(esc) || esc <= 0) { setError('A tensão de escoamento deve ser um valor válido.'); return; }
+
+                    let deltaCalc = 0; let M_max = 0; 
+                    let maxSpan = 0; let maxWidth = null; let maxLoad = null;
+
+                    const limitL175 = L / 175;
+                    const absLimit = 30; 
+                    const activeLimit = Math.min(limitL175, absLimit);
+
+                    if (loadType === 'pressao') {
+                        const p = parseFloat(loadPressure);
+                        const w = parseFloat(actingWidth);
+                        if (isNaN(p) || isNaN(w) || w <= 0) { setError('Verifique os dados da pressão e largura de atuação.'); return; }
+                        
+                        const q_linear = p * Math.pow(10, -6) * w; 
+                        M_max = (q_linear * Math.pow(L, 2)) / 8;
+                        deltaCalc = (5 * q_linear * Math.pow(L, 4)) / (384 * MODULO_ELASTICIDADE_ALUMINIO * I);
+                        
+                        const L_max1 = Math.cbrt((384 * MODULO_ELASTICIDADE_ALUMINIO * I) / (875 * p * Math.pow(10, -6) * w));
+                        const L_max2 = Math.pow((30 * 384 * MODULO_ELASTICIDADE_ALUMINIO * I) / (5 * p * Math.pow(10, -6) * w), 0.25);
+                        maxSpan = Math.min(L_max1, L_max2);
+                        maxWidth = (activeLimit * 384 * MODULO_ELASTICIDADE_ALUMINIO * I) / (5 * p * Math.pow(10, -6) * Math.pow(L, 4));
+
+                    } else if (loadType === 'distribuida') {
+                        const q_m = parseFloat(loadDistributed);
+                        if (isNaN(q_m)) { setError('Verifique o valor da carga distribuída.'); return; }
+                        
+                        const q_linear = q_m / 1000; 
+                        M_max = (q_linear * Math.pow(L, 2)) / 8;
+                        deltaCalc = (5 * q_linear * Math.pow(L, 4)) / (384 * MODULO_ELASTICIDADE_ALUMINIO * I);
+
+                        const L_max1 = Math.cbrt((384 * MODULO_ELASTICIDADE_ALUMINIO * I) / (875 * q_linear));
+                        const L_max2 = Math.pow((30 * 384 * MODULO_ELASTICIDADE_ALUMINIO * I) / (5 * q_linear), 0.25);
+                        maxSpan = Math.min(L_max1, L_max2);
+                        maxLoad = (activeLimit * 384 * MODULO_ELASTICIDADE_ALUMINIO * I) / (5 * Math.pow(L, 4)); 
+                    } else {
+                        const f = parseFloat(loadConcentrated);
+                        if (isNaN(f) || f <= 0) { setError('Verifique o valor da carga concentrada.'); return; }
+                        
+                        M_max = (f * L) / 4;
+                        deltaCalc = (f * Math.pow(L, 3)) / (48 * MODULO_ELASTICIDADE_ALUMINIO * I);
+
+                        const L_max1 = Math.sqrt((48 * MODULO_ELASTICIDADE_ALUMINIO * I) / (175 * f));
+                        const L_max2 = Math.cbrt((30 * 48 * MODULO_ELASTICIDADE_ALUMINIO * I) / f);
+                        maxSpan = Math.min(L_max1, L_max2);
+                        maxLoad = (activeLimit * 48 * MODULO_ELASTICIDADE_ALUMINIO * I) / Math.pow(L, 3); 
+                    }
+
+                    const tensaoCalc = M_max / W; 
+                    const tensaoAdm = esc / 1.65; 
+                    const deltaAdm = activeLimit;
+
+                    const passedTensao = tensaoCalc <= tensaoAdm;
+                    const passedFlecha = deltaCalc <= deltaAdm;
+                    const passed = passedTensao && passedFlecha;
+
+                    const res = {
+                        inertia: I, resistance: W,
+                        mMax: M_max / 1000, 
+                        calcDeflection: deltaCalc, admDeflection: deltaAdm,
+                        tensaoCalc: tensaoCalc, tensaoAdm: tensaoAdm,
+                        passedTensao: passedTensao, passedFlecha: passedFlecha, passed: passed,
+                        maxSpan: maxSpan, maxWidth: maxWidth, maxLoad: maxLoad,
+                        L, esc, loadType, loadPressure, actingWidth, loadDistributed, loadConcentrated
+                    };
+
+                    setResults(res);
+                    
+                    try { window.saveHistoryItem('flecha', 'Flecha em Perfis', 'ph-ruler', res); } catch(ex){}
+
+                    setTimeout(() => {
+                        const resDiv = document.getElementById('flecha-resultados-view');
+                        if(resDiv) resDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+
+                } catch (err) {
+                    console.error("Erro interno no react: ", err);
+                    setError("Ocorreu um erro ao calcular: Verifique os valores inseridos.");
+                }
+            };
+
+            const formatN = (val, dec) => {
+                if (val === undefined || val === null || isNaN(val)) return '-';
+                return Number(val).toLocaleString('pt-BR', { maximumFractionDigits: dec });
+            };
+
+            return (
+                <div className="p-4 md:p-8 font-sans text-slate-800">
+                <div className="max-w-5xl mx-auto space-y-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h1 className="text-2xl font-bold text-slate-900">Dimensionamento de Flecha e Tensão</h1>
+                        <p className="text-slate-500">Perfis de Alumínio Bi-apoiados</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                        
+                        {/* INÉRCIA */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                            <h2 className="text-lg font-bold text-blue-900 border-b pb-2">1. Propriedades Geométricas do Perfil</h2>
+                            <div className="flex bg-slate-100 p-1 rounded-lg flex-wrap">
+                                <button className={`flex-1 min-w-[100px] py-2 text-xs font-medium rounded-md transition-colors ${inertiaMode === 'manual' ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setInertiaMode('manual')}>Informar Valor</button>
+                                <button className={`flex-1 min-w-[100px] py-2 text-xs font-medium rounded-md transition-colors ${inertiaMode === 'calcular' ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setInertiaMode('calcular')}>Calcular Geometria</button>
+                                <button className={`flex-1 min-w-[100px] py-2 text-xs font-medium rounded-md transition-colors ${inertiaMode === 'catalogo' ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setInertiaMode('catalogo')}>Catálogo de Perfis</button>
+                            </div>
+
+                            {inertiaMode === 'manual' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="block text-sm font-medium text-slate-700 mb-1">Inércia - I (mm⁴)</label><input type="number" value={inertiaManual} onChange={(e) => setInertiaManual(e.target.value)} placeholder="Ex: 150000" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                                    <div><label className="block text-sm font-medium text-slate-700 mb-1">Mód. Resist. - W (mm³)</label><input type="number" value={resistanceManual} onChange={(e) => setResistanceManual(e.target.value)} placeholder="Ex: 6000" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                                </div>
+                            )}
+
+                            {inertiaMode === 'calcular' && (
+                                <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button onClick={() => setProfileType('retangular')} className={`p-2 border rounded-lg flex flex-col items-center gap-1 transition-all ${profileType === 'retangular' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-500'}`}><i className="ph ph-rectangle text-xl"></i><span className="text-[10px] font-medium">Retangular</span></button>
+                                        <button onClick={() => setProfileType('quadrado')} className={`p-2 border rounded-lg flex flex-col items-center gap-1 transition-all ${profileType === 'quadrado' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-500'}`}><i className="ph ph-square text-xl"></i><span className="text-[10px] font-medium">Quadrado</span></button>
+                                        <button onClick={() => setProfileType('redondo')} className={`p-2 border rounded-lg flex flex-col items-center gap-1 transition-all ${profileType === 'redondo' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-500'}`}><i className="ph ph-circle text-xl"></i><span className="text-[10px] font-medium">Redondo</span></button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {profileType === 'retangular' && (
+                                            <>
+                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">Base Ext. (mm)</label><input type="number" value={dimWidth} onChange={(e) => setDimWidth(e.target.value)} placeholder="Ex: 50" className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">Altura Ext. (mm) *Carga</label><input type="number" value={dimHeight} onChange={(e) => setDimHeight(e.target.value)} placeholder="Ex: 100" className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                            </>
+                                        )}
+                                        {profileType === 'quadrado' && (<div className="col-span-2"><label className="block text-xs font-medium text-slate-500 mb-1">Lado Ext. (mm)</label><input type="number" value={dimSide} onChange={(e) => setDimSide(e.target.value)} placeholder="Ex: 40" className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        {profileType === 'redondo' && (<div className="col-span-2"><label className="block text-xs font-medium text-slate-500 mb-1">Diâmetro Ext. (mm)</label><input type="number" value={dimDiameter} onChange={(e) => setDimDiameter(e.target.value)} placeholder="Ex: 50.8" className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>)}
+                                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 mb-1">Espessura (mm)</label><input type="number" value={dimThickness} onChange={(e) => setDimThickness(e.target.value)} placeholder="Ex: 2" className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {inertiaMode === 'catalogo' && (
+                                <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-500 mb-1">Sistemista</label>
+                                        <select className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" value={selectedSistemista} onChange={(e) => { setSelectedSistemista(e.target.value); setSelectedSistema(''); setSelectedTipo(''); setSelectedPerfil(''); setCatalogProps({I:'', W:''}); }}>
+                                            <option value="">Selecione...</option>
+                                            {sistemistas.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                    {selectedSistemista && (
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-1">Sistema / Linha</label>
+                                            <select className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" value={selectedSistema} onChange={(e) => { setSelectedSistema(e.target.value); setSelectedTipo(''); setSelectedPerfil(''); setCatalogProps({I:'', W:''}); }}>
+                                                <option value="">Selecione...</option>
+                                                {sistemas.map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {selectedSistema && (
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-1">Tipo de Perfil</label>
+                                            <select className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" value={selectedTipo} onChange={(e) => { setSelectedTipo(e.target.value); setSelectedPerfil(''); setCatalogProps({I:'', W:''}); }}>
+                                                <option value="">Selecione...</option>
+                                                {tipos.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {selectedTipo && (
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 mb-1">Perfil</label>
+                                            <select className="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" value={selectedPerfil} onChange={(e) => handlePerfilChange(e.target.value)}>
+                                                <option value="">Selecione...</option>
+                                                {perfis.map(p => <option key={p.perfil} value={p.perfil}>{p.perfil}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {catalogProps.I && (
+                                        <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg flex justify-around text-blue-900 font-mono text-sm">
+                                            <span><strong>Ix:</strong> {catalogProps.I} mm⁴</span>
+                                            <span><strong>Wx:</strong> {catalogProps.W} mm³</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* LIGA */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <h2 className="text-lg font-bold text-blue-900">2. Resistência do Material</h2>
+                                <button onClick={() => setShowAlloys(!showAlloys)} className="text-sm text-blue-500 hover:text-blue-700 flex items-center"><i className="ph ph-info mr-1"></i> Ligas</button>
+                            </div>
+                            {showAlloys && (
+                                <div className="text-xs bg-blue-50 text-slate-700 p-3 rounded-lg border border-blue-100">
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        <li><strong>6060-T5:</strong> ~ 120 MPa (Uso geral)</li>
+                                        <li><strong>6063-T5:</strong> ~ 110 MPa (Acabamento)</li>
+                                        <li><strong>6061-T6:</strong> ~ 240 MPa (Estrutural rígido)</li>
+                                    </ul>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Tensão de Escoamento (MPa)</label>
+                                <input type="number" value={yieldStrength} onChange={(e) => setYieldStrength(e.target.value)} placeholder="Ex: 120" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+                        </div>
+
+                        {/* CARGA */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                            <h2 className="text-lg font-bold text-blue-900 border-b pb-2">3. Aplicação de Carga</h2>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Distância entre apoios / Vão (mm)</label>
+                                <input type="number" value={spanLength} onChange={(e) => setSpanLength(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 2000" />
+                            </div>
+                            <div className="flex bg-slate-100 p-1 rounded-lg mt-4 flex-wrap">
+                                <button className={`flex-1 min-w-[100px] py-2 text-xs font-medium rounded-md ${loadType === 'pressao' ? 'bg-white shadow text-blue-700' : 'text-slate-500'}`} onClick={() => setLoadType('pressao')}>Pressão</button>
+                                <button className={`flex-1 min-w-[100px] py-2 text-xs font-medium rounded-md ${loadType === 'distribuida' ? 'bg-white shadow text-blue-700' : 'text-slate-500'}`} onClick={() => setLoadType('distribuida')}>Distribuída</button>
+                                <button className={`flex-1 min-w-[100px] py-2 text-xs font-medium rounded-md ${loadType === 'concentrada' ? 'bg-white shadow text-blue-700' : 'text-slate-500'}`} onClick={() => setLoadType('concentrada')}>Concentrada</button>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-2 space-y-4">
+                                {loadType === 'pressao' && (
+                                    <>
+                                        <div><label className="block text-sm font-medium text-slate-700 mb-1">Pressão de Projeto (Pa)</label><input type="number" value={loadPressure} onChange={(e) => setLoadPressure(e.target.value)} placeholder="Ex: 800" className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                        <div><label className="block text-sm font-medium text-slate-700 mb-1">Largura de Atuação (mm)</label><input type="number" value={actingWidth} onChange={(e) => setActingWidth(e.target.value)} placeholder="Ex: 1000" className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                    </>
+                                )}
+                                {loadType === 'distribuida' && (
+                                    <div><label className="block text-sm font-medium text-slate-700 mb-1">Carga Linear (N/m)</label><input type="number" value={loadDistributed} onChange={(e) => setLoadDistributed(e.target.value)} placeholder="Ex: 1500" className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                )}
+                                {loadType === 'concentrada' && (
+                                    <div><label className="block text-sm font-medium text-slate-700 mb-1">Carga Central (N)</label><input type="number" value={loadConcentrated} onChange={(e) => setLoadConcentrated(e.target.value)} placeholder="Ex: 500" className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                )}
+                            </div>
+                        </div>
+
+                        <button onClick={handleCalculate} className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-md text-lg">
+                            Calcular Perfil
+                        </button>
+                    </div>
+
+                    {/* RESULTADOS FLECHA */}
+                    <div className="space-y-6">
+                        <div id="flecha-resultados-view" className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg h-full min-h-[400px]">
+                            <h2 className="text-xl font-bold mb-6 text-blue-400 border-b border-slate-700 pb-2">Relatório de Resultados</h2>
+
+                            {error && (<div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-xl mb-4 text-sm">{error}</div>)}
+                            {!results && !error && (
+                                <div className="flex flex-col items-center justify-center h-64 text-slate-500"><i className="ph ph-ruler text-5xl mb-3"></i><p>Preencha os dados e calcule.</p></div>
+                            )}
+
+                            {results && !error && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                            <p className="text-slate-400 text-xs">Momento de Inércia (I)</p>
+                                            <p className="text-lg font-mono text-blue-300">{formatN(results.inertia, 1)} <span className="text-xs">mm⁴</span></p>
+                                        </div>
+                                        <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                            <p className="text-slate-400 text-xs">Mód. Resistência (W)</p>
+                                            <p className="text-lg font-mono text-blue-300">{formatN(results.resistance, 1)} <span className="text-xs">mm³</span></p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                        <h3 className="text-sm font-bold text-white mb-3">Análise de Tensão (ELU)</h3>
+                                        <p className="flex justify-between text-sm mb-1">Momento Fletor Máx: <span className="font-mono">{formatN(results.mMax, 2)} N.m</span></p>
+                                        <p className="flex justify-between text-sm mb-1 text-slate-300">Tensão Admissível: <span className="font-mono">{formatN(results.tensaoAdm, 2)} MPa</span></p>
+                                        <p className="flex justify-between text-sm mb-2 font-bold text-white">Tensão Calculada: <span className="font-mono">{formatN(results.tensaoCalc, 2)} MPa</span></p>
+                                        <div className={`p-2 rounded text-center text-sm font-bold ${results.passedTensao ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+                                            {results.passedTensao ? 'Tensão OK' : 'Falha por Tensão'}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                        <h3 className="text-sm font-bold text-white mb-3">Análise de Deformação (ELS)</h3>
+                                        <p className="flex justify-between text-sm mb-1 text-slate-300">Flecha Admissível: <span className="font-mono">{formatN(results.admDeflection, 2)} mm</span></p>
+
+                                        <p className="text-xs text-slate-500 text-right mb-2">(L/175 limitado a 30mm)</p>
+                                        
+                                        <p className="flex justify-between text-sm mb-2 font-bold text-white">Flecha Calculada: <span className="font-mono">{formatN(results.calcDeflection, 2)} mm</span></p>
+                                        <div className={`p-2 rounded text-center text-sm font-bold ${results.passedFlecha ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+                                            {results.passedFlecha ? 'Flecha OK' : 'Falha por Deformação'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-3">
+                                        <p className="text-slate-400 text-sm font-medium border-b border-slate-700 pb-2">Valores Máximos Tolerados (Flecha)</p>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-slate-400 text-xs mb-1">Vão Máx. Tolerado</p>
+                                                <p className="text-lg font-bold text-blue-300">{formatN(results.maxSpan, 1)} <span className="text-sm font-normal">mm</span></p>
+                                            </div>
+                                            {results.loadType === 'pressao' && (
+                                                <div>
+                                                    <p className="text-slate-400 text-xs mb-1">Largura Atuação Máx.</p>
+                                                    <p className="text-lg font-bold text-blue-300">{formatN(results.maxWidth, 1)} <span className="text-sm font-normal">mm</span></p>
+                                                </div>
+                                            )}
+                                            {(results.loadType === 'distribuida' || results.loadType === 'concentrada') && (
+                                                <div>
+                                                    <p className="text-slate-400 text-xs mb-1">Carga Máx. Tolerada</p>
+                                                    <p className="text-lg font-bold text-blue-300">
+                                                        {results.loadType === 'distribuida' ? formatN(results.maxLoad * 1000, 1) + ' N/m' : formatN(results.maxLoad, 1) + ' N'}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-5 rounded-xl border text-center ${results.passed ? 'bg-green-600 border-green-500 text-white' : 'bg-red-600 border-red-500 text-white'}`}>
+                                        <h2 className="text-2xl font-bold uppercase">{results.passed ? 'Perfil Aprovado' : 'Perfil Reprovado'}</h2>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <!-- SCRIPT 3: CÁLCULO DE VIDRO E PRESSÃO (VANILLA JS) -->
+    <script>
+        // -- VIDRO LOGIC --
+        const EPSILON_3 = { "float": 1.00, "float-acidado": 1.00, "float-jateado": 1.40, "texturizado-aramado": 1.30, "texturizado": 1.10, "temperado": 0.61, "temperado-texturizado": 0.71, "esmaltado-temperado": 0.77, "termoendurecido": 0.80, "temperado-quimicamente": 0.55, "borossilicato": 1.00, "borossilicato-temperado": 0.61, "ceramico": 1.00 };
+        const EPSILON_2 = { 2: 1.30, 3: 1.50, 4: 1.60 };
+        const EPSILON_1 = { 2: 1.60, 3: 2.00 };
+        const ALPHA_TABLE_6 = [ { ratio: 1.0, alpha: 0.6571 }, { ratio: 0.9, alpha: 0.8000 }, { ratio: 0.8, alpha: 0.9714 }, { ratio: 0.7, alpha: 1.1857 }, { ratio: 0.6, alpha: 1.4143 }, { ratio: 0.5, alpha: 1.6429 }, { ratio: 0.4, alpha: 1.8714 }, { ratio: 0.3, alpha: 2.1000 }, { ratio: 0.2, alpha: 2.1000 }, { ratio: 0.1, alpha: 2.1143 }, { ratio: 0.0, alpha: 2.1143 } ];
+        const ALPHA_TABLE_7 = [ { ratio: 0.300, alpha: 0.68571 }, { ratio: 0.333, alpha: 0.73143 }, { ratio: 0.350, alpha: 0.80000 }, { ratio: 0.400, alpha: 0.91429 }, { ratio: 0.500, alpha: 1.14286 }, { ratio: 0.667, alpha: 1.51429 }, { ratio: 0.700, alpha: 1.56286 }, { ratio: 0.800, alpha: 1.71000 }, { ratio: 0.900, alpha: 1.85714 }, { ratio: 1.000, alpha: 2.00000 }, { ratio: 1.100, alpha: 2.05714 }, { ratio: 1.200, alpha: 2.11429 }, { ratio: 1.300, alpha: 2.17143 }, { ratio: 1.400, alpha: 2.22857 }, { ratio: 1.500, alpha: 2.28571 }, { ratio: 1.750, alpha: 2.31429 }, { ratio: 2.000, alpha: 2.35714 }, { ratio: 3.000, alpha: 2.37143 }, { ratio: 4.000, alpha: 2.38571 }, { ratio: 5.000, alpha: 2.38571 }, { ratio: Infinity, alpha: 2.38571 } ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sistemaTipo = document.getElementById('sistema-tipo');
+            const compositionInputs = document.getElementById('composition-inputs');
+            const aplicacao = document.getElementById('aplicacao');
+            const anguloWrapper = document.getElementById('angulo-wrapper');
+            const tipoApoio = document.getElementById('tipo-apoio');
+            const bordaLivreWrapper = document.getElementById('borda-livre-wrapper');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const resultsWrapper = document.getElementById('results-wrapper');
+            const errorMessage = document.getElementById('error-message');
+            const pvInput = document.getElementById('pressao-vento');
+
+            window.addEventListener('pressureExported', (e) => {
+                if (pvInput) {
+                    pvInput.value = e.detail.toFixed(2);
+                    pvInput.classList.add('ring-2', 'ring-green-500');
+                    setTimeout(() => pvInput.classList.remove('ring-2', 'ring-green-500'), 2000);
+                }
+            });
+
+            function updateCompositionUI() {
+                compositionInputs.innerHTML = '';
+                const system = sistemaTipo.value;
+                if (system === 'mono') compositionInputs.appendChild(createPaneInput(1, 'Monolítico'));
+                else if (system === 'lami') { compositionInputs.appendChild(createPaneInput(1, 'Laminado - Lâmina 1')); compositionInputs.appendChild(createPaneInput(2, 'Laminado - Lâmina 2')); }
+                else if (system === 'insu') { compositionInputs.appendChild(createPaneInput(1, 'Insulado - Painel 1 (Mono)')); compositionInputs.appendChild(createPaneInput(2, 'Insulado - Painel 2 (Mono)')); }
+            }
+
+            function createPaneInput(index, label) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-200 bg-slate-50 p-4 rounded-xl';
+                wrapper.innerHTML = `
+                    <label class="block text-sm font-bold text-blue-900 md:col-span-2">${label}</label>
+                    <div><label class="block text-sm text-slate-700 mb-1">Tipo de Vidro</label><select class="pane-type w-full border border-slate-300 bg-white rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500">${Object.keys(EPSILON_3).map(k => `<option value="${k}">${k.charAt(0).toUpperCase() + k.slice(1).replace(/-/g, ' ')}</option>`).join('')}</select></div>
+                    <div><label class="block text-sm text-slate-700 mb-1">Espessura (mm)</label><input type="number" class="pane-thickness w-full border border-slate-300 bg-white rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500" min="1" placeholder="Ex: 6"></div>
+                `;
+                return wrapper;
+            }
+
+            aplicacao.addEventListener('change', () => aplicacao.value.startsWith('incl-') ? anguloWrapper.classList.remove('hidden') : anguloWrapper.classList.add('hidden'));
+            tipoApoio.addEventListener('change', () => (tipoApoio.value === '3' || tipoApoio.value === '2') ? bordaLivreWrapper.classList.remove('hidden') : bordaLivreWrapper.classList.add('hidden'));
+
+            function interpolate(x, table) {
+                let p1 = null, p2 = null;
+                for (const pt of table) if (pt.ratio === x) return pt.alpha;
+                for (let i = 0; i < table.length - 1; i++) if (table[i].ratio >= x && table[i+1].ratio < x) { p1 = table[i]; p2 = table[i+1]; break; }
+                if (!p1) p1 = table[0]; if (!p2) p2 = table[table.length - 1];
+                if (p1.ratio === p2.ratio) return p1.alpha;
+                return p1.alpha + (p2.alpha - p1.alpha) * (x - p1.ratio) / (p2.ratio - p1.ratio);
+            }
+
+            function getAlpha(l, L, apoio, bordaLivre) {
+                if (apoio === '2') return 2.1143; 
+                if (apoio === '4') return interpolate(Math.max(0.0, Math.min(1.0, l / L)), ALPHA_TABLE_6);
+                if (apoio === '3') {
+                    let b = (bordaLivre === 'maior') ? L : l;
+                    let L_apoio = (bordaLivre === 'maior') ? l : L;
+                    let ratio = Math.max(0.3, L_apoio / b);
+                    if (ratio > 5) return 2.38571;
+                    return interpolate(ratio, ALPHA_TABLE_7);
+                }
+                return 0;
+            }
+
+            calculateBtn.addEventListener('click', () => {
+                try {
+                    errorMessage.textContent = '';
+                    const l = parseFloat(document.getElementById('lado-l').value);
+                    const L = parseFloat(document.getElementById('lado-L').value);
+                    const Pv = parseFloat(document.getElementById('pressao-vento').value);
+                    if (l > L) throw new Error('O "Menor Lado (l)" deve ser menor ou igual ao "Maior Lado (L)".');
+                    if (isNaN(l) || isNaN(L) || isNaN(Pv) || l <= 0 || L <= 0 || Pv <= 0) throw new Error('Preencha L, l e Pv com valores numéricos positivos.');
+
+                    const S = L * l; 
+                    const apoio = document.getElementById('tipo-apoio').value; 
+                    const bordaLivre = document.getElementById('borda-livre').value; 
+                    const app = document.getElementById('aplicacao').value; 
+                    const angulo = parseFloat(document.getElementById('angulo').value) || 0; 
+                    const c = (document.getElementById('altura').value === 'terreo') ? 0.9 : 1.0; 
+                    const system = document.getElementById('sistema-tipo').value;
+
+                    const panes = [];
+                    const types = document.querySelectorAll('.pane-type');
+                    const thicknesses = document.querySelectorAll('.pane-thickness');
+                    for (let i = 0; i < types.length; i++) {
+                        let t = parseFloat(thicknesses[i].value);
+                        if (isNaN(t) || t <= 0) throw new Error(`Preencha a espessura do Painel/Lâmina ${i + 1}.`);
+                        panes.push({ type: types[i].value, thickness: t });
+                    }
+
+                    const ep = panes.reduce((s, p) => s + p.thickness, 0); 
+                    const Pp = 25 * ep; 
+                    let P = 0;
+                    const cos_t = Math.cos(angulo * Math.PI / 180);
+                    const alpha_p = panes.every(p => p.type.includes('temperado')) ? 1 : 2; 
+
+                    switch (app) {
+                        case 'vert-ext': P = Pv * 1.5; break;
+                        case 'vert-int': P = Math.max(600, Pv * 1.5); break;
+                        case 'incl-ext': P = Math.max(Pv * 1.5, 1.2 * (Pv + alpha_p * Pp * cos_t)); break;
+                        case 'incl-int': P = Math.max(Pp * 4.7, 600 + Pp); break;
+                    }
+
+                    let e1 = 0;
+                    const r = L / l;
+                    const sp = Math.sqrt(P);
+                    if (apoio === '4') e1 = (r <= 2.5) ? Math.sqrt((S * P) / 100) : (l * sp) / 6.3; 
+                    else if (apoio === '3') e1 = (bordaLivre === 'menor') ? (l * sp) / 6.3 : ((r <= 7.5) ? Math.sqrt((L * 3 * l * P) / 100) : (3 * l * sp) / 6.3);
+                    else e1 = (bordaLivre === 'menor') ? (l * sp) / 6.3 : (L * sp) / 6.3; 
+
+                    const e_target = e1 * c;
+                    const max_e3 = Math.max(...panes.map(p => EPSILON_3[p.type]));
+                    let eR = 0, eF = 0;
+                    
+                    if (system === 'mono') { eR = panes[0].thickness / EPSILON_3[panes[0].type]; eF = panes[0].thickness; }
+                    else if (system === 'lami') { let e2 = EPSILON_2[panes.length] || EPSILON_2[4]; eR = ep / (0.9 * e2 * max_e3); eF = ep / e2; }
+                    else if (system === 'insu') { let e1_f = EPSILON_1[panes.length] || EPSILON_1[3]; eR = ep / (0.9 * e1_f * max_e3); eF = ep / e1_f; }
+                    
+                    const resOk = eR >= e_target;
+                    let b_m = (apoio === '4') ? l : ((bordaLivre === 'maior') ? L : l);
+                    const alpha = getAlpha(l, L, apoio, bordaLivre);
+                    const f = alpha * (P / 1.5) * (Math.pow(b_m, 4) / Math.pow(eF, 3));
+                    let f_adm = (apoio === '4') ? Math.min((l * 1000) / 60, 30) : Math.min((b_m * 1000) / 100, 50);
+                    const flechaOk = f <= f_adm;
+
+                    const statusEl = document.getElementById('result-status');
+                    statusEl.textContent = (resOk && flechaOk) ? 'SISTEMA APROVADO' : 'SISTEMA REPROVADO';
+                    statusEl.className = (resOk && flechaOk) ? 'p-4 rounded-lg text-center text-2xl font-bold mb-6 bg-green-600 text-white border-green-500' : 'p-4 rounded-lg text-center text-2xl font-bold mb-6 bg-red-600 text-white border-red-500';
+
+                    document.getElementById('res-pressao-calculo').textContent = `${P.toFixed(2)} Pa`;
+                    document.getElementById('res-e1').textContent = `${e1.toFixed(2)} mm`;
+                    document.getElementById('res-c').textContent = `${c.toFixed(1)}`;
+                    document.getElementById('res-alvo').textContent = `${e_target.toFixed(2)} mm`;
+                    document.getElementById('res-er').textContent = `${eR.toFixed(2)} mm`;
+                    document.getElementById('res-er-status').textContent = resOk ? 'OK' : 'FALHOU';
+                    document.getElementById('res-er-status').className = resOk ? 'font-bold text-green-400' : 'font-bold text-red-400';
+
+                    document.getElementById('res-alpha').textContent = `${alpha.toFixed(4)}`;
+                    document.getElementById('res-ef').textContent = `${eF.toFixed(2)} mm`;
+                    document.getElementById('res-flecha-admissivel').textContent = `${f_adm.toFixed(2)} mm`;
+                    document.getElementById('res-flecha-calculada').textContent = `${f.toFixed(2)} mm`;
+                    document.getElementById('res-flecha-status').textContent = flechaOk ? 'OK' : 'FALHOU';
+                    document.getElementById('res-flecha-status').className = flechaOk ? 'font-bold text-green-400' : 'font-bold text-red-400';
+                    
+                    resultsWrapper.classList.remove('hidden');
+
+                    // SCROLL CORRIGIDO DIRETAMENTE NO WRAPPER
+                    setTimeout(() => { resultsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+
+                    // SALVAR HISTÓRICO NO NAVEGADOR
+                    window.saveHistoryItem('vidro', 'Espessura de Vidro (NBR 7199)', 'ph-square-half', {
+                        l, L, Pv, apoio, system, bordaLivre, app, angulo, c, panes, P, e1, e_target, eR, alpha, eF, f_adm, f, resOk, flechaOk
+                    });
+
+                } catch (err) {
+                    errorMessage.textContent = `Erro: ${err.message}`;
+                    resultsWrapper.classList.add('hidden');
+                }
+            });
+
+            updateCompositionUI(); 
+            sistemaTipo.addEventListener('change', updateCompositionUI);
+        });
+
+        // -- PRESSÃO LOGIC --
+        const b_vals = { 1: 1.10, 2: 1.00, 3: 0.94, 4: 0.86, 5: 0.74 };
+        const Fr_vals = { 'A': 1.00, 'B': 0.98, 'C': 0.95 };
+        const p_vals = { 1: { 'A': 0.06, 'B': 0.065, 'C': 0.07 }, 2: { 'A': 0.085, 'B': 0.09, 'C': 0.10 }, 3: { 'A': 0.10, 'B': 0.105, 'C': 0.115 }, 4: { 'A': 0.12, 'B': 0.125, 'C': 0.135 }, 5: { 'A': 0.15, 'B': 0.16, 'C': 0.175 } };
+        const s2Table = {
+            1: { A: [1.08,1.10,1.13,1.15,1.17,1.20,1.21,1.22,1.25,1.26,1.28,1.29,1.30,1.31,1.32,1.33], B: [1.04,1.09,1.12,1.14,1.17,1.19,1.21,1.22,1.25,1.26,1.28,1.29,1.30,1.31,1.32,1.34], C: [1.01,1.06,1.09,1.12,1.15,1.17,1.19,1.21,1.23,1.25,1.27,1.28,1.29,1.30,1.31,1.33] },
+            2: { A: [0.94,1.00,1.04,1.06,1.10,1.13,1.15,1.16,1.19,1.22,1.24,1.25,1.27,1.28,1.29,1.31], B: [0.92,0.98,1.02,1.04,1.08,1.11,1.13,1.15,1.18,1.21,1.23,1.24,1.26,1.27,1.28,1.31], C: [0.89,0.95,0.99,1.02,1.06,1.09,1.12,1.14,1.17,1.20,1.22,1.24,1.25,1.27,1.28,1.31] },
+            3: { A: [0.88,0.94,0.98,1.01,1.05,1.08,1.10,1.12,1.15,1.18,1.21,1.22,1.24,1.25,1.27,1.30], B: [0.86,0.92,0.96,0.99,1.03,1.07,1.09,1.11,1.15,1.17,1.20,1.22,1.23,1.25,1.26,1.29], C: [0.82,0.88,0.93,0.96,1.00,1.04,1.06,1.09,1.12,1.15,1.18,1.20,1.22,1.23,1.25,1.28] },
+            4: { A: [0.79,0.86,0.90,0.93,0.98,1.02,1.04,1.07,1.10,1.13,1.16,1.18,1.20,1.22,1.23,1.27], B: [0.76,0.83,0.88,0.91,0.96,0.99,1.02,1.04,1.08,1.11,1.14,1.16,1.18,1.20,1.21,1.25], C: [0.73,0.80,0.84,0.88,0.93,0.96,0.99,1.02,1.06,1.09,1.12,1.14,1.16,1.18,1.20,1.23] },
+            5: { A: [0.74,0.74,0.79,0.82,0.87,0.91,0.94,0.97,1.01,1.05,1.07,1.10,1.12,1.14,1.16,1.20], B: [0.72,0.72,0.76,0.80,0.85,0.89,0.93,0.95,1.00,1.03,1.06,1.09,1.11,1.14,1.16,1.20], C: [0.67,0.67,0.72,0.76,0.82,0.86,0.89,0.92,0.97,1.01,1.04,1.07,1.10,1.12,1.14,1.18] }
+        };
+        const alturasTable = [5,10,15,20,30,40,50,60,80,100,120,140,160,180,200,250];
+
+        let pressaoDeProjetoFinal = 0;
+        document.getElementById('fator_s1').addEventListener('change', (e) => { e.target.value === 'custom' ? document.getElementById('fator_s1_custom').classList.remove('hidden') : document.getElementById('fator_s1_custom').classList.add('hidden'); });
+
+        document.getElementById('calcular-pressao').addEventListener('click', () => {
+            const v0 = parseFloat(document.getElementById('velocidade_basica').value);
+            let s1 = parseFloat(document.getElementById('fator_s1').value);
+            if (document.getElementById('fator_s1').value === 'custom') s1 = parseFloat(document.getElementById('fator_s1_custom').value) || 1.0;
+            const categoria = parseInt(document.getElementById('categoria_terreno').value);
+            const classe = document.getElementById('classe_edificacao').value;
+            const alturaZ = parseFloat(document.getElementById('altura_z').value);
+            let s3 = parseFloat(document.getElementById('fator_s3').value);
+            const isVedacao = document.getElementById('s3_vedacao').checked;
+            const cpe_cpi = parseFloat(document.getElementById('cpe_cpi').value) || 1.2;
+
+            if (isNaN(v0) || isNaN(s1) || isNaN(alturaZ) || isNaN(s3)) { alert("Preencha todos os campos corretamente."); return; }
+            if (isVedacao) s3 = s3 * 0.92;
+
+            let s2 = 0;
+            const indexAltura = alturasTable.indexOf(alturaZ);
+            if (indexAltura !== -1) {
+                s2 = s2Table[categoria][classe][indexAltura];
+            } else {
+                const z_calc = Math.max(alturaZ, 5);
+                s2 = b_vals[categoria] * Fr_vals[classe] * Math.pow((z_calc / 10), p_vals[categoria][classe]);
+            }
+
+            const vk = v0 * s1 * s2 * s3;
+            const q = 0.613 * Math.pow(vk, 2); 
+            pressaoDeProjetoFinal = q * cpe_cpi;
+
+            document.getElementById('resultados').innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between border-b pb-1"><span class="text-slate-500 text-sm">Fator S₁:</span><span class="font-mono text-sm">${s1.toFixed(2)}</span></div>
+                    <div class="flex justify-between border-b pb-1"><span class="text-slate-500 text-sm">Fator S₂ (z=${alturaZ}m):</span><span class="font-mono text-sm">${s2.toFixed(3)}</span></div>
+                    <div class="flex justify-between border-b pb-1"><span class="text-slate-500 text-sm">Fator S₃ ${isVedacao ? '(Reduzido 0,92)' : ''}:</span><span class="font-mono text-sm">${s3.toFixed(3)}</span></div>
+                    <div class="flex justify-between border-b pb-1 text-blue-700 font-bold"><span>Velocidade Vₖ:</span><span class="font-mono">${vk.toFixed(2)} m/s</span></div>
+                </div>
+                <div class="mt-4 p-4 bg-white border border-slate-200 rounded-lg text-center shadow-sm">
+                    <p class="text-sm text-slate-500 font-semibold mb-1">Pressão Dinâmica (q)</p>
+                    <p class="text-2xl font-bold text-slate-800">${q.toFixed(2)} Pa</p>
+                </div>
+                <div class="mt-4 p-5 bg-blue-600 rounded-lg text-center shadow-md">
+                    <p class="text-sm text-blue-200 font-bold mb-1 uppercase tracking-wider">Pressão de Projeto Final</p>
+                    <p class="text-xs text-blue-200 mb-2">q × (Cpe - Cpi)</p>
+                    <p class="text-4xl font-bold text-white">${pressaoDeProjetoFinal.toFixed(2)} Pa</p>
+                </div>
+            `;
+            
+            const resView = document.getElementById('pressao-resultados-view');
+            document.getElementById('export-section').classList.remove('hidden');
+            setTimeout(() => { if(resView) resView.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+
+            window.saveHistoryItem('pressao', 'Pressão Dinâmica (NBR 6123)', 'ph-wind', { v0, s1, alturaZ, s2, s3, vk, q, cpe_cpi, pressaoDeProjetoFinal, categoria, classe, isVedacao });
+        });
+
+        document.getElementById('exportar-pressao').addEventListener('click', () => {
+            if(pressaoDeProjetoFinal > 0) {
+                window.dispatchEvent(new CustomEvent('pressureExported', { detail: pressaoDeProjetoFinal }));
+                const msg = document.getElementById('export-msg');
+                msg.classList.remove('hidden'); setTimeout(() => msg.classList.add('hidden'), 3000);
+            }
+        });
+    </script>
+</body>
+</html>

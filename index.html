@@ -384,6 +384,7 @@ z-index:-1;">
                         <div id="composition-inputs" class="mt-6 space-y-6"></div>
                     </div>
                     <button type="button" id="calculate-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md transition duration-300 text-lg">Calcular Vidro</button>
+                    <div id="error-message" role="alert" class="text-center text-red-600 bg-red-50 border border-red-200 rounded-lg font-medium text-sm p-3 hidden"></div>
                 </form>
         
                 <!-- Resultados Vidro -->
@@ -414,7 +415,6 @@ z-index:-1;">
                                 </div>
                             </div>
                         </div>
-                        <div id="error-message" class="mt-4 text-center text-red-400 font-medium text-sm"></div>
 <div class="mt-6">
 <button type="button" onclick="document.getElementById('criterios-vidro').classList.toggle('hidden')" class="w-full bg-slate-700 hover:bg-slate-800 text-white py-3 rounded-lg font-semibold">Critérios de Aprovação / Reprovação</button>
 <div id="criterios-vidro" class="hidden mt-4 bg-slate-800 border border-slate-700 rounded-lg p-4 text-sm text-slate-200">
@@ -1241,7 +1241,7 @@ document.getElementById('pdf-content').style.width = '190mm';
 
             calculateBtn.addEventListener('click', () => {
                 try {
-                    errorMessage.textContent = '';
+                    errorMessage.textContent = ''; errorMessage.classList.add('hidden');
                     const l = parseFloat(document.getElementById('lado-l').value);
                     const L = parseFloat(document.getElementById('lado-L').value);
                     const Pv = parseFloat(document.getElementById('pressao-vento').value);
@@ -1331,6 +1331,8 @@ document.getElementById('pdf-content').style.width = '190mm';
 
                 } catch (err) {
                     errorMessage.textContent = `Erro: ${err.message}`;
+                    errorMessage.classList.remove('hidden');
+                    errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     resultsWrapper.classList.add('hidden');
                 }
             });

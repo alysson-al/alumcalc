@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alysson-al.github.io/alumcalc/sitemap.xml
